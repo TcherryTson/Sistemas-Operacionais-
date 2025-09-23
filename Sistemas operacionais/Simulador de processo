@@ -1,0 +1,202 @@
+import java.io.Serializable;
+
+public class Processo implements Serializable {
+    private int pid;
+    private int tempoTotal;
+    private int tp;
+    private int cp;
+    private String estado;
+    private int nes;
+    private int nCpu;
+    private int quantumRestante;
+    private boolean foiBloqueado;
+
+    public Processo(int pid, int tempoTotal) {
+        this.pid = pid;
+        this.tempoTotal = tempoTotal;
+        this.tp = 0;
+        this.cp = 1;
+        this.estado = "PRONTO";
+        this.nes = 0;
+        this.nCpu = 0;
+        this.quantumRestante = 1000;
+        this.foiBloqueado = false;
+    }
+
+
+    public int getPid() { return pid; }
+    public int getTempoTotal() { return tempoTotal; }
+    public int getTp() { return tp; }
+    public int getCp() { return cp; }
+    public String getEstado() { return estado; }
+    public int getNes() { return nes; }
+    public int getN_cpu() { return nCpu; }
+    public int getQuantumRestante() { return quantumRestante; }
+    public boolean foiBloqueado() { return foiBloqueado; }
+
+
+    public void setTp(int tp) { this.tp = tp; }
+    public void setCp(int cp) { this.cp = cp; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public void setNes(int nes) { this.nes = nes; }
+    public void setN_cpu(int nCpu) { this.nCpu = nCpu; }
+    public void setQuantumRestante(int quantumRestante) { this.quantumRestante = quantumRestante; }
+    public void setFoiBloqueado(boolean foiBloqueado) { this.foiBloqueado = foiBloqueado; }
+
+    @Override
+    public String toString() {
+        return "--- Processo PID " + pid + " ---\n" +
+                "PID: " + pid + "\n" +
+                "TP (Ciclos Executados): " + tp + "\n" +
+                "CP (Próxima Instrução): " + cp + "\n" +
+                "Estado: " + estado + "\n" +
+                "NES (Operações E/S): " + nes + "\n" +
+                "N_CPU (Uso da CPU): " + nCpu + "\n" +
+                "Quantum Restante: " + quantumRestante + "\n";
+    }
+}
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+
+public class SimulacaoSO {
+    private static final int QUANTUM = 1000;
+    private static final int CHANCE_ES = 1;
+    private static final int CHANCE_SAIR_BLOQUEADO = 30;
+
+
+    private Queue<Processo> prontoQueue = new LinkedList<>();
+    private Queue<Processo> bloqueadoQueue = new LinkedList<>();
+    private Processo executandoProcesso = null;
+    private List<Processo> processosTerminados = new ArrayList<>();
+
+    private static final Map<Integer, Integer> temposExecucao = new HashMap<>();
+    static {
+        temposExecucao.put(0,  10000);
+        temposExecucao.put(1, 5000);
+        temposExecucao.put(2, 7000);
+        temposExecucao.put(3, 3000);
+        temposExecucao.put(4, 3000);
+        temposExecucao.put(5, 8000);
+        temposExecucao.put(6, 2000);
+        temposExecucao.put(7, 5000);
+        temposExecucao.put(8, 4000);
+        temposExecucao.put(9, 10000);
+    }
+
+    public static void main(String[] args) {
+        new SimulacaoSO().iniciarSimulacao();
+    }
+
+    public void iniciarSimulacao() {
+
+        for (int i = 0; i < 10; i++) {
+            prontoQueue.add(new Processo(i, temposExecucao.get(i)));
+        }
+        System.out.println("Simulação iniciada. 10 processos criados e na fila de PRONTO.");
+
+
+        while (!prontoQueue.isEmpty() || executandoProcesso != null || !bloqueadoQueue.isEmpty()) {
+
+
+            gerenciarBloqueados();
+
+
+            if (executandoProcesso == null && !prontoQueue.isEmpty()) {
+                executandoProcesso = prontoQueue.poll();
+                executandoProcesso.setEstado("EXECUTANDO");
+                executandoProcesso.setQuantumRestante(QUANTUM);
+                executandoProcesso.setN_cpu(executandoProcesso.getN_cpu() + 1);
+                executandoProcesso.setCp(executandoProcesso.getTp() + 1);
+                System.out.println("\nPID " + executandoProcesso.getPid() + " foi do estado PRONTO para EXECUTANDO.");
+            }
+
+
+            if (executandoProcesso != null) {
+                executarProcesso();
+            }
+
+
+            salvarTabela();
+        }
+
+        System.out.println("\nTodos os processos terminaram sua execução. Simulação concluída.");
+        System.out.println("Verifique o arquivo 'tabela_processos.txt' para o histórico dos processos.");
+    }
+
+    private void gerenciarBloqueados() {
+
+        for (Processo pBloqueado : new ArrayList<>(bloqueadoQueue)) {
+            if (new Random().nextInt(100) < CHANCE_SAIR_BLOQUEADO) {
+                pBloqueado.setEstado("PRONTO");
+                pBloqueado.setFoiBloqueado(false);
+                prontoQueue.add(pBloqueado);
+                bloqueadoQueue.remove(pBloqueado);
+                System.out.println("PID " + pBloqueado.getPid() + " saiu do estado BLOQUEADO e foi para PRONTO.");
+            }
+        }
+    }
+
+    private void executarProcesso() {
+        for (int i = 0; i < QUANTUM; i++) {
+
+            if (executandoProcesso.getTp() >= executandoProcesso.getTempoTotal()) {
+                terminarProcesso();
+                return;
+            }
+
+
+            if (new Random().nextInt(100) < CHANCE_ES) {
+                realizarES();
+                return;
+            }
+
+            executandoProcesso.setTp(executandoProcesso.getTp() + 1);
+            executandoProcesso.setCp(executandoProcesso.getTp() + 1);
+            executandoProcesso.setQuantumRestante(executandoProcesso.getQuantumRestante() - 1);
+        }
+
+
+        trocaContexto(executandoProcesso, "PRONTO");
+        prontoQueue.add(executandoProcesso);
+        executandoProcesso = null;
+    }
+
+    private void realizarES() {
+        trocaContexto(executandoProcesso, "BLOQUEADO");
+        executandoProcesso.setEstado("BLOQUEADO");
+        executandoProcesso.setNes(executandoProcesso.getNes() + 1);
+        executandoProcesso.setFoiBloqueado(true);
+        bloqueadoQueue.add(executandoProcesso);
+        executandoProcesso = null;
+    }
+
+    private void terminarProcesso() {
+        System.out.println("\n------------------------------------------");
+        System.out.println("PID " + executandoProcesso.getPid() + " terminou sua execução!");
+        System.out.println(executandoProcesso);
+        System.out.println("------------------------------------------\n");
+        executandoProcesso.setEstado("TERMINADO");
+        processosTerminados.add(executandoProcesso);
+        executandoProcesso = null;
+    }
+
+    private void trocaContexto(Processo processo, String novoEstado) {
+        System.out.println("------------------------------------------");
+        System.out.println("Troca de Contexto do PID " + processo.getPid() + ": EXECUTANDO -> " + novoEstado);
+        System.out.println(processo);
+        System.out.println("------------------------------------------\n");
+    }
+
+    private void salvarTabela() {
+        try (FileWriter writer = new FileWriter("tabela_processos.txt")) {
+            for (Processo p : prontoQueue) writer.write(p.toString() + "\n");
+            if (executandoProcesso != null) writer.write(executandoProcesso.toString() + "\n");
+            for (Processo p : bloqueadoQueue) writer.write(p.toString() + "\n");
+            for (Processo p : processosTerminados) writer.write(p.toString() + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}  
