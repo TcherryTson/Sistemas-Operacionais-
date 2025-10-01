@@ -1,0 +1,42 @@
+ALGORITMO: Priority Scheduling (Preemptive)
+
+ORDEM DE EXECUCAO:
+0-1: P1
+1-5: P2
+5-10: P4
+10-17: P1
+17-26: P3
+26-28: P5
+
+METRICAS INDIVIDUAIS:
+Processo P1: Tempo de Espera = 9, Tempo de Retorno = 17
+Processo P2: Tempo de Espera = 0, Tempo de Retorno = 4
+Processo P3: Tempo de Espera = 15, Tempo de Retorno = 24
+Processo P4: Tempo de Espera = 2, Tempo de Retorno = 7
+Processo P5: Tempo de Espera = 22, Tempo de Retorno = 24
+
+METRICAS GERAIS:
+Tempo Médio de Espera: 9,60
+Tempo Médio de Retorno: 15,20
+
+--------------------------------------------------
+
+ALGORITMO: Priority Scheduling - Multiple Queues
+
+ORDEM DE EXECUCAO:
+0-8: P1
+8-12: P2
+12-17: P4
+17-26: P3
+26-28: P5
+
+METRICAS INDIVIDUAIS:
+Processo P1: Tempo de Espera = 0, Tempo de Retorno = 8
+Processo P2: Tempo de Espera = 7, Tempo de Retorno = 11
+Processo P3: Tempo de Espera = 15, Tempo de Retorno = 24
+Processo P4: Tempo de Espera = 9, Tempo de Retorno = 14
+Processo P5: Tempo de Espera = 22, Tempo de Retorno = 24
+
+METRICAS GERAIS:
+Tempo Médio de Espera: 10,60
+Tempo Médio de Retorno: 16,20
