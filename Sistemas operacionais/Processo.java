@@ -1,0 +1,26 @@
+public class Processo {
+    private String id;
+    private int tamanho;
+    private int enderecoInicial;
+    public Processo(String id, int tamanho) {
+        this.id = id;
+        this.tamanho = tamanho;
+        this.enderecoInicial = -1;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public int getTamanho() {
+        return tamanho;
+    }
+
+    public int getEnderecoInicial() {
+        return enderecoInicial;
+    }
+
+    public void setEnderecoInicial(int enderecoInicial) {
+        this.enderecoInicial = enderecoInicial;
+    }
+}
